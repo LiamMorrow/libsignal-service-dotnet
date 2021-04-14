@@ -632,7 +632,7 @@ namespace libsignalservice
 
                 if (message.Quote.Author.GetNumber() != null)
                 {
-                    quoteBuilder.AuthorE164 = message.Quote.Author.GetNumber();
+                    quoteBuilder.Author = message.Quote.Author.GetNumber();
                 }
 
                 foreach (SignalServiceQuotedAttachment attachment in message.Quote.Attachments)
@@ -717,53 +717,51 @@ namespace libsignalservice
         private byte[] CreateCallContent(SignalServiceCallMessage callMessage)
         {
             Content content = new Content();
-            CallMessage pushCallMessage = new CallMessage();
+            CallingMessage pushCallMessage = new CallingMessage();
 
             if (callMessage.OfferMessage != null)
             {
-                pushCallMessage.Offer = new CallMessage.Types.Offer()
+                pushCallMessage.Offer = new CallingMessage.Types.Offer()
                 {
-                    Id = callMessage.OfferMessage.Id,
-                    Description = callMessage.OfferMessage.Description
+                    CallId = callMessage.OfferMessage.Id,
+                    Opaque = ByteString.CopyFrom(callMessage.OfferMessage.Opaque)
                 };
             }
             else if (callMessage.AnswerMessage != null)
             {
-                pushCallMessage.Answer = new CallMessage.Types.Answer()
+                pushCallMessage.Answer = new CallingMessage.Types.Answer()
                 {
-                    Id = callMessage.AnswerMessage.Id,
-                    Description = callMessage.AnswerMessage.Description
+                    CallId= callMessage.AnswerMessage.Id,
+                    Opaque= ByteString.CopyFrom(callMessage.AnswerMessage.Opaque)
                 };
             }
             else if (callMessage.IceUpdateMessages != null)
             {
                 foreach (IceUpdateMessage u in callMessage.IceUpdateMessages)
                 {
-                    pushCallMessage.IceUpdate.Add(new CallMessage.Types.IceUpdate()
+                    pushCallMessage.IceCandidates.Add(new CallingMessage.Types.IceCandidate()
                     {
-                        Id = u.Id,
-                        Sdp = u.Sdp,
-                        SdpMid = u.SdpMid,
-                        SdpMLineIndex = u.SdpMLineIndex
+                        CallId = u.CallId,
+                        Opaque = ByteString.CopyFrom(u.Opaque)
                     });
                 }
             }
             else if (callMessage.HangupMessage != null)
             {
-                pushCallMessage.Hangup = new CallMessage.Types.Hangup()
+                pushCallMessage.Hangup = new CallingMessage.Types.Hangup()
                 {
-                    Id = callMessage.HangupMessage.Id
+                    CallId = callMessage.HangupMessage.Id
                 };
             }
             else if (callMessage.BusyMessage != null)
             {
-                pushCallMessage.Busy = new CallMessage.Types.Busy()
+                pushCallMessage.Busy = new CallingMessage.Types.Busy()
                 {
-                    Id = callMessage.BusyMessage.Id
+                    CallId = callMessage.BusyMessage.Id
                 };
             }
 
-            content.CallMessage = pushCallMessage;
+            content.CallingMessage = pushCallMessage;
             return content.ToByteArray();
         }
 
@@ -849,7 +847,7 @@ namespace libsignalservice
 
                         if (result.Address.GetNumber() != null)
                         {
-                            builder.DestinationE164 = result.Address.GetNumber();
+                            builder.Destination = result.Address.GetNumber();
                         }
 
                         builder.Unidentified = result.Success.Unidentified;
@@ -861,7 +859,7 @@ namespace libsignalservice
                 if (recipient != null)
                 {
                     if (recipient.Uuid.HasValue) sentMessage.DestinationUuid = recipient.Uuid.Value.ToString();
-                    if (recipient.GetNumber() != null) sentMessage.DestinationE164 = recipient.GetNumber();
+                    if (recipient.GetNumber() != null) sentMessage.Destination= recipient.GetNumber();
                 }
 
                 if (dataMessage.ExpireTimer > 0)
@@ -906,7 +904,7 @@ namespace libsignalservice
 
                 if (readMessage.Sender.GetNumber() != null)
                 {
-                    readBuilder.SenderE164 = readMessage.Sender.GetNumber();
+                    readBuilder.Sender= readMessage.Sender.GetNumber();
                 }
             }
 
@@ -940,7 +938,7 @@ namespace libsignalservice
 
             if (readMessage.Sender.GetNumber() != null)
             {
-                viewOnceBuilder.SenderE164 = readMessage.Sender.GetNumber();
+                viewOnceBuilder.Sender = readMessage.Sender.GetNumber();
             }
 
             builder.ViewOnceOpen = viewOnceBuilder;
@@ -1059,7 +1057,7 @@ namespace libsignalservice
 
             if (verifiedMessage.Destination.GetNumber() != null)
             {
-                verifiedMessageBuilder.DestinationE164 = verifiedMessage.Destination.GetNumber();
+                verifiedMessageBuilder.Destination = verifiedMessage.Destination.GetNumber();
             }
 
             switch (verifiedMessage.Verified)
@@ -1120,20 +1118,6 @@ namespace libsignalservice
                         {
                             builder.MembersE164.Add(address.GetNumber());
                         }
-
-                        GroupContext.Types.Member memberBuilder = new GroupContext.Types.Member();
-
-                        if (address.Uuid.HasValue)
-                        {
-                            memberBuilder.Uuid = address.Uuid.Value.ToString();
-                        }
-
-                        if (address.GetNumber() != null)
-                        {
-                            memberBuilder.E164 = address.GetNumber();
-                        }
-
-                        builder.Members.Add(memberBuilder);
                     }
                 }
 

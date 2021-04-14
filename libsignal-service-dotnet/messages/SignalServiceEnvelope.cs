@@ -52,7 +52,7 @@ namespace libsignalservice.messages
 
             if (sender.GetNumber() != null)
             {
-                envelope.SourceE164 = sender.GetNumber();
+                envelope.Source = sender.GetNumber();
             }
 
             if (uuid != null)
@@ -98,7 +98,7 @@ namespace libsignalservice.messages
         /// <returns>True if either a source E164 or UUID is present.</returns>
         public bool HasSource()
         {
-            return Envelope.HasSourceE164 || Envelope.HasSourceUuid;
+            return Envelope.HasSource || Envelope.HasSourceUuid;
         }
 
         /// <summary>
@@ -107,7 +107,7 @@ namespace libsignalservice.messages
         /// <returns>The envelope's sender as an E164 number.</returns>
         public string? GetSourceE164()
         {
-            return Envelope.SourceE164;
+            return Envelope.Source;
         }
 
         /// <summary>
@@ -139,7 +139,7 @@ namespace libsignalservice.messages
         /// <returns>The envelope's sender as a SignalServiceAddress.</returns>
         public SignalServiceAddress GetSourceAddress()
         {
-            return new SignalServiceAddress(UuidUtil.ParseOrNull(Envelope.SourceUuid), Envelope.SourceE164);
+            return new SignalServiceAddress(UuidUtil.ParseOrNull(Envelope.SourceUuid), Envelope.Source);
         }
 
         /// <summary>

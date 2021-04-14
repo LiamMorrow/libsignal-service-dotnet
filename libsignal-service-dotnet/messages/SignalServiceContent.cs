@@ -28,7 +28,7 @@ namespace libsignalservice.messages
 
         public SignalServiceDataMessage? Message { get; }
         public SignalServiceSyncMessage? SynchronizeMessage { get; }
-        public SignalServiceCallMessage? CallMessage { get; }
+        public SignalServiceCallMessage? CallingMessage { get; }
         public SignalServiceReceiptMessage? ReadMessage { get; }
         public SignalServiceTypingMessage? TypingMessage { get; }
 
@@ -42,7 +42,7 @@ namespace libsignalservice.messages
 
             Message = message;
             SynchronizeMessage = null;
-            CallMessage = null;
+            CallingMessage = null;
             ReadMessage = null;
             TypingMessage = null;
         }
@@ -57,7 +57,7 @@ namespace libsignalservice.messages
 
             Message = null;
             SynchronizeMessage = synchronizeMessage;
-            CallMessage = null;
+            CallingMessage = null;
             ReadMessage = null;
             TypingMessage = null;
         }
@@ -72,7 +72,7 @@ namespace libsignalservice.messages
 
             Message = null;
             SynchronizeMessage = null;
-            CallMessage = callMessage;
+            CallingMessage = callMessage;
             ReadMessage = null;
             TypingMessage = null;
         }
@@ -87,7 +87,7 @@ namespace libsignalservice.messages
 
             Message = null;
             SynchronizeMessage = null;
-            CallMessage = null;
+            CallingMessage = null;
             ReadMessage = receiptMessage;
             TypingMessage = null;
         }
@@ -102,7 +102,7 @@ namespace libsignalservice.messages
 
             Message = null;
             SynchronizeMessage = null;
-            CallMessage = null;
+            CallingMessage = null;
             ReadMessage = null;
             TypingMessage = typingMessage;
         }
@@ -178,9 +178,9 @@ namespace libsignalservice.messages
                         metadata.NeedsReceipt,
                         serviceContentProto);
                 }
-                else if (message.CallMessage != null)
+                else if (message.CallingMessage != null)
                 {
-                    return new SignalServiceContent(CreateCallMessage(message.CallMessage),
+                    return new SignalServiceContent(CreateCallingMessage(message.CallingMessage),
                         metadata.Sender,
                         metadata.SenderDevice,
                         metadata.Timestamp,
@@ -274,8 +274,8 @@ namespace libsignalservice.messages
                 var unidentifiedStatuses = new Dictionary<SignalServiceAddress, bool>();
                 SyncMessage.Types.Sent sentContent = content.Sent;
                 SignalServiceDataMessage dataMessage = CreateSignalServiceMessage(metadata, sentContent.Message);
-                SignalServiceAddress? address = SignalServiceAddress.IsValidAddress(sentContent.DestinationUuid, sentContent.DestinationE164) ?
-                    new SignalServiceAddress(UuidUtil.ParseOrNull(sentContent.DestinationUuid), sentContent.DestinationE164) :
+                SignalServiceAddress? address = SignalServiceAddress.IsValidAddress(sentContent.DestinationUuid, sentContent.Destination) ?
+                    new SignalServiceAddress(UuidUtil.ParseOrNull(sentContent.DestinationUuid), sentContent.Destination) :
                     null;
 
                 if (address == null && dataMessage.Group == null)
@@ -285,9 +285,9 @@ namespace libsignalservice.messages
 
                 foreach (var status in sentContent.UnidentifiedStatus)
                 {
-                    if (SignalServiceAddress.IsValidAddress(status.DestinationUuid, status.DestinationE164))
+                    if (SignalServiceAddress.IsValidAddress(status.DestinationUuid, status.Destination))
                     {
-                        SignalServiceAddress recipient = new SignalServiceAddress(UuidUtil.ParseOrNull(status.DestinationUuid), status.DestinationE164);
+                        SignalServiceAddress recipient = new SignalServiceAddress(UuidUtil.ParseOrNull(status.DestinationUuid), status.Destination);
                         unidentifiedStatuses.Add(recipient, status.Unidentified);
                     }
                     else
@@ -315,9 +315,9 @@ namespace libsignalservice.messages
 
                 foreach (SyncMessage.Types.Read read in content.Read)
                 {
-                    if (SignalServiceAddress.IsValidAddress(read.SenderUuid, read.SenderE164))
+                    if (SignalServiceAddress.IsValidAddress(read.SenderUuid, read.Sender))
                     {
-                        SignalServiceAddress address = new SignalServiceAddress(UuidUtil.ParseOrNull(read.SenderUuid), read.SenderE164);
+                        SignalServiceAddress address = new SignalServiceAddress(UuidUtil.ParseOrNull(read.SenderUuid), read.Sender);
                         readMessages.Add(new ReadMessage(address, (long)read.Timestamp));
                     }
                     else
@@ -331,9 +331,9 @@ namespace libsignalservice.messages
 
             if (content.ViewOnceOpen != null)
             {
-                if (SignalServiceAddress.IsValidAddress(content.ViewOnceOpen.SenderUuid, content.ViewOnceOpen.SenderE164))
+                if (SignalServiceAddress.IsValidAddress(content.ViewOnceOpen.SenderUuid, content.ViewOnceOpen.Sender))
                 {
-                    SignalServiceAddress address = new SignalServiceAddress(UuidUtil.ParseOrNull(content.ViewOnceOpen.SenderUuid), content.ViewOnceOpen.SenderE164);
+                    SignalServiceAddress address = new SignalServiceAddress(UuidUtil.ParseOrNull(content.ViewOnceOpen.SenderUuid), content.ViewOnceOpen.Sender);
                     ViewOnceOpenMessage timerRead = new ViewOnceOpenMessage(address, (long)content.ViewOnceOpen.Timestamp);
                     return SignalServiceSyncMessage.ForViewOnceOpen(timerRead);
                 }
@@ -357,12 +357,12 @@ namespace libsignalservice.messages
 
             if (content.Verified != null)
             {
-                if (SignalServiceAddress.IsValidAddress(content.Verified.DestinationUuid, content.Verified.DestinationE164))
+                if (SignalServiceAddress.IsValidAddress(content.Verified.DestinationUuid, content.Verified.Destination))
                 {
                     try
                     {
                         Verified verified = content.Verified;
-                        SignalServiceAddress destination = new SignalServiceAddress(UuidUtil.ParseOrNull(verified.DestinationUuid), verified.DestinationE164);
+                        SignalServiceAddress destination = new SignalServiceAddress(UuidUtil.ParseOrNull(verified.DestinationUuid), verified.Destination);
                         IdentityKey identityKey = new IdentityKey(verified.IdentityKey.ToByteArray(), 0);
 
                         VerifiedMessage.VerifiedState verifiedState;
@@ -428,7 +428,7 @@ namespace libsignalservice.messages
                 List<string> uuids = content.Blocked.Uuids.ToList();
                 List<SignalServiceAddress> addresses = new List<SignalServiceAddress>(numbers.Count + uuids.Count);
                 List<byte[]> groupIds = new List<byte[]>(content.Blocked.GroupIds.Count);
-                
+
                 foreach (string e164 in numbers)
                 {
                     SignalServiceAddress? address = SignalServiceAddress.FromRaw(null, e164);
@@ -468,7 +468,7 @@ namespace libsignalservice.messages
             return SignalServiceSyncMessage.Empty();
         }
 
-        private static SignalServiceCallMessage CreateCallMessage(CallMessage content)
+        private static SignalServiceCallMessage CreateCallingMessage(CallingMessage content)
         {
             if (content.Offer != null)
             {
@@ -476,8 +476,8 @@ namespace libsignalservice.messages
                 {
                     OfferMessage = new OfferMessage()
                     {
-                        Id = content.Offer.Id,
-                        Description = content.Offer.Description
+                        Id = content.Offer.CallId,
+                        Opaque = content.Offer.Opaque.ToByteArray()
                     }
                 };
             }
@@ -487,23 +487,21 @@ namespace libsignalservice.messages
                 {
                     AnswerMessage = new AnswerMessage()
                     {
-                        Id = content.Answer.Id,
-                        Description = content.Answer.Description
+                        Id = content.Answer.CallId,
+                        Opaque = content.Answer.Opaque.ToByteArray()
                     }
                 };
             }
-            else if (content.IceUpdate.Count > 0)
+            else if (content.IceCandidates.Count > 0)
             {
                 var m = new SignalServiceCallMessage();
                 var l = new List<IceUpdateMessage>();
-                foreach (var u in content.IceUpdate)
+                foreach (var u in content.IceCandidates)
                 {
                     l.Add(new IceUpdateMessage()
                     {
-                        Id = u.Id,
-                        SdpMid = u.SdpMid,
-                        SdpMLineIndex = u.SdpMLineIndex,
-                        Sdp = u.Sdp
+                        CallId = u.CallId,
+                        Opaque = u.Opaque.ToByteArray()
                     });
                 }
                 m.IceUpdateMessages = l;
@@ -515,7 +513,7 @@ namespace libsignalservice.messages
                 {
                     HangupMessage = new HangupMessage()
                     {
-                        Id = content.Hangup.Id,
+                        Id = content.Hangup.CallId,
                     }
                 };
             }
@@ -525,7 +523,7 @@ namespace libsignalservice.messages
                 {
                     BusyMessage = new BusyMessage()
                     {
-                        Id = content.Busy.Id
+                        Id = content.Busy.CallId
                     }
                 };
             }
@@ -598,9 +596,9 @@ namespace libsignalservice.messages
                     attachment.Thumbnail != null ? CreateAttachmentPointer(attachment.Thumbnail) : null));
             }
 
-            if (SignalServiceAddress.IsValidAddress(content.Quote.AuthorUuid, content.Quote.AuthorE164))
+            if (SignalServiceAddress.IsValidAddress(content.Quote.AuthorUuid, content.Quote.Author))
             {
-                SignalServiceAddress address = new SignalServiceAddress(UuidUtil.ParseOrNull(content.Quote.AuthorUuid), content.Quote.AuthorE164);
+                SignalServiceAddress address = new SignalServiceAddress(UuidUtil.ParseOrNull(content.Quote.AuthorUuid), content.Quote.Author);
 
                 return new SignalServiceDataMessage.SignalServiceQuote((long)content.Quote.Id,
                     address,
@@ -800,23 +798,7 @@ namespace libsignalservice.messages
                     name = content.Group.Name;
                 }
 
-                if (content.Group.Members.Count > 0)
-                {
-                    members = new List<SignalServiceAddress>(content.Group.Members.Count);
-
-                    foreach (GroupContext.Types.Member member in content.Group.Members)
-                    {
-                        if (SignalServiceAddress.IsValidAddress(member.Uuid, member.E164))
-                        {
-                            members.Add(new SignalServiceAddress(UuidUtil.ParseOrNull(member.Uuid), member.E164));
-                        }
-                        else
-                        {
-                            throw new ProtocolInvalidMessageException(new InvalidMessageException("GroupContext.Member had no address!"), null, 0);
-                        }
-                    }
-                }
-                else if (content.Group.MembersE164.Count > 0)
+                if (content.Group.MembersE164.Count > 0)
                 {
                     members = new List<SignalServiceAddress>(content.Group.MembersE164.Count);
 

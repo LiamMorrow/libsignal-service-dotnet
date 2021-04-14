@@ -13,7 +13,7 @@ namespace libsignal_service_dotnet_tests.crypto
         public void TestKeyDerivation()
         {
             byte[] key = new byte[32];
-            Arrays.fill(key, 0x02);
+            Arrays.Fill(key, 0x02);
 
             byte[] result = UnidentifiedAccess.DeriveAccessKeyFrom(key);
             CollectionAssert.AreEqual(EXPECTED_RESULT, result);

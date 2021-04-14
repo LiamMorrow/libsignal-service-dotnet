@@ -48,7 +48,7 @@ namespace libsignalservice.messages.multidevice
                 {
                     IdentityKey identityKey = new IdentityKey(details.Verified.IdentityKey.ToByteArray(), 0);
                     SignalServiceAddress destination = new SignalServiceAddress(UuidUtil.ParseOrNull(details.Verified.DestinationUuid),
-                        details.Verified.DestinationE164);
+                        details.Verified.Destination);
 
                     VerifiedState state;
                     switch (details.Verified.State)

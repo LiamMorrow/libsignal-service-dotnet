@@ -86,7 +86,7 @@ namespace libsignalservice.messages.multidevice
 
                 if (contact.Verified.Destination.GetNumber() != null)
                 {
-                    verifiedBuilder.DestinationE164 = contact.Verified.Destination.GetNumber();
+                    verifiedBuilder.Destination = contact.Verified.Destination.GetNumber();
                 }
 
                 contactDetails.Verified = verifiedBuilder;

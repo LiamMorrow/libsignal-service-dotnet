@@ -4,7 +4,7 @@ namespace libsignal_service_dotnet.messages.calls
     public class OfferMessage
     {
         public ulong Id { get; set; }
-        public string Description { get; set; }
+        public byte[] Opaque { get; set; }
     }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 }
